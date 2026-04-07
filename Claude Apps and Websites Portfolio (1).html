@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CSM Portfolio — Genesys</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --g-orange: #FF4F1F;
+    --g-navy: #233950;
+    --g-navy-light: #2e4a66;
+    --g-navy-muted: #3a5a7a;
+    --g-orange-light: #fff0eb;
+    --g-orange-mid: #ffd5c5;
+    --g-navy-bg: #edf1f5;
+    --g-border: #dce4ec;
+    --g-text-muted: #5a7a96;
+    --g-text-hint: #8aacbe;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f4f7; color: var(--g-navy); min-height: 100vh; }
+  .page { max-width: 960px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding-bottom: 1.25rem; border-bottom: 0.5px solid var(--g-border); margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px; }
+  .header-brand { display: flex; align-items: center; gap: 10px; }
+  .brand-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--g-orange); flex-shrink: 0; }
+  .app-title { font-size: 18px; font-weight: 500; color: var(--g-navy); }
+  .app-sub { font-size: 13px; color: var(--g-text-muted); margin-top: 2px; }
+
+  .btn { font-size: 13px; padding: 6px 14px; border-radius: 8px; border: 0.5px solid #b0c4d4; background: transparent; color: var(--g-navy); cursor: pointer; font-family: inherit; }
+  .btn:hover { background: var(--g-navy-bg); }
+  .btn-primary { background: var(--g-orange); color: #fff; border-color: var(--g-orange); }
+  .btn-primary:hover { background: #e0451a; border-color: #e0451a; }
+  .btn-sm { font-size: 12px; padding: 4px 10px; }
+  .btn-danger { background: var(--g-orange-light); color: #cc3d16; border-color: #ffb8a0; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 1.25rem; }
+  .metric-card { background: var(--g-navy); border-radius: 8px; padding: 14px 16px; }
+  .metric-card.orange { background: var(--g-orange); }
+  .metric-label { font-size: 12px; color: rgba(255,255,255,0.65); margin-bottom: 6px; }
+  .metric-value { font-size: 22px; font-weight: 500; color: #fff; }
+  .metric-sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+
+  .accounts-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 0.5px solid #b0c4d4; cursor: pointer; color: var(--g-text-muted); background: transparent; font-family: inherit; }
+  .chip:hover { background: var(--g-navy-bg); }
+  .chip.active { background: var(--g-navy); color: #fff; border-color: var(--g-navy); }
+  .search-input { font-size: 13px; padding: 6px 10px; border: 0.5px solid #b0c4d4; border-radius: 8px; background: #fff; color: var(--g-navy); width: 180px; font-family: inherit; }
+
+  .account-card { background: #fff; border: 0.5px solid var(--g-border); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 10px; }
+  .account-card.risk-border { border-left: 3px solid var(--g-orange); border-radius: 0 12px 12px 0; }
+  .account-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; gap: 8px; flex-wrap: wrap; }
+  .account-name-row { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--g-navy); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; flex-shrink: 0; }
+  .account-name { font-size: 14px; font-weight: 500; color: var(--g-navy); }
+  .account-meta { font-size: 12px; color: var(--g-text-muted); margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .acct-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+  .health-badge { font-size: 12px; padding: 3px 10px; border-radius: 8px; font-weight: 500; white-space: nowrap; }
+  .health-green { background: #e6f4ea; color: #276739; }
+  .health-yellow { background: #fff8e1; color: #7a5800; }
+  .health-red { background: var(--g-orange-light); color: #cc3d16; }
+  .arr-badge { font-size: 12px; padding: 3px 8px; border-radius: 8px; background: var(--g-navy-bg); color: var(--g-navy); }
+  .renewal-badge { font-size: 12px; padding: 3px 8px; border-radius: 8px; }
+  .renewal-soon { background: #fff8e1; color: #7a5800; }
+  .renewal-ok { background: var(--g-navy-bg); color: var(--g-text-muted); }
+
+  .sparkline-row { display: flex; gap: 6px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 2px; }
+  .sparkline-wrap { background: var(--g-navy-bg); border-radius: 8px; padding: 8px 10px; min-width: 120px; flex-shrink: 0; }
+  .sparkline-label { font-size: 11px; color: var(--g-text-muted); margin-bottom: 4px; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap: 8px; margin-bottom: 10px; }
+  .kpi-tile { background: var(--g-navy-bg); border-radius: 8px; padding: 10px 12px; }
+  .kpi-name { font-size: 11px; color: var(--g-text-muted); margin-bottom: 4px; }
+  .kpi-val { font-size: 16px; font-weight: 500; color: var(--g-navy); }
+  .kpi-trend { font-size: 11px; margin-top: 2px; }
+  .trend-up { color: #276739; }
+  .trend-down { color: #cc3d16; }
+  .trend-neutral { color: var(--g-text-muted); }
+  .kpi-target { font-size: 11px; color: var(--g-text-hint); }
+  .add-kpi-tile { background: transparent; border: 0.5px dashed #b0c4d4; border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--g-text-muted); font-size: 12px; gap: 4px; min-height: 68px; font-family: inherit; }
+  .add-kpi-tile:hover { background: var(--g-navy-bg); }
+  .kpi-del { font-size: 11px; color: var(--g-text-hint); cursor: pointer; background: none; border: none; padding: 0; line-height: 1; }
+
+  .notes-section { border-top: 0.5px solid var(--g-border); padding-top: 10px; margin-top: 4px; }
+  .notes-label { font-size: 11px; color: var(--g-text-muted); margin-bottom: 6px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
+  .note-item { font-size: 12px; color: var(--g-navy); padding: 5px 8px; background: var(--g-navy-bg); border-radius: 8px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; }
+  .note-text { flex: 1; }
+  .note-date { font-size: 11px; color: var(--g-text-hint); white-space: nowrap; }
+  .add-note-row { display: flex; gap: 6px; margin-top: 6px; }
+  .add-note-input { flex: 1; font-size: 13px; padding: 6px 8px; border: 0.5px solid #b0c4d4; border-radius: 8px; background: #fff; color: var(--g-navy); font-family: inherit; }
+
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(35,57,80,0.45); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 1rem; }
+  .modal { background: #fff; border: 0.5px solid var(--g-border); border-radius: 12px; padding: 1.5rem; width: 400px; max-width: 100%; }
+  .modal-title { font-size: 16px; font-weight: 500; color: var(--g-navy); margin-bottom: 1rem; }
+  .form-group { margin-bottom: 12px; }
+  .form-label { font-size: 12px; color: var(--g-text-muted); margin-bottom: 4px; display: block; }
+  .form-input { width: 100%; font-size: 14px; padding: 8px 10px; border: 0.5px solid #b0c4d4; border-radius: 8px; background: #fff; color: var(--g-navy); font-family: inherit; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1rem; }
+
+  .toast { position: fixed; bottom: 20px; right: 20px; background: var(--g-navy); color: #fff; border-radius: 8px; padding: 10px 16px; font-size: 13px; z-index: 999; }
+  .empty-state { text-align: center; padding: 2rem; color: var(--g-text-muted); font-size: 13px; }
+
+  @media (max-width: 600px) {
+    .summary-grid { grid-template-columns: repeat(2,1fr); }
+    .form-row { grid-template-columns: 1fr; }
+    .search-input { width: 140px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div id="root"></div>
+</div>
+
+<script>
+const STORAGE_KEY = 'csm_portfolio_v2';
+
+const DEFAULT_DATA = {
+  accounts: [
+    { id:1, name:'NetApp', segment:'Enterprise', health:'At Risk', arr:'$1.2M', renewal:'2025-09-01',
+      notes:[{text:'Escalation open with support team re: IVR latency', date:'Apr 2'}],
+      kpis:[
+        {name:'CSAT', value:'72%', target:'85%', trend:'-3%', dir:'down', history:[78,76,75,74,73,72]},
+        {name:'FCR', value:'61%', target:'75%', trend:'+1%', dir:'up', history:[58,59,59,60,60,61]},
+        {name:'AHT (sec)', value:'312', target:'280', trend:'+8', dir:'down', history:[290,295,298,302,308,312]},
+        {name:'Containment', value:'38%', target:'50%', trend:'-2%', dir:'down', history:[44,43,42,41,40,38]},
+      ]
+    },
+    { id:2, name:'Voxai / Genesys', segment:'Enterprise', health:'Healthy', arr:'$2.4M', renewal:'2026-03-01',
+      notes:[{text:'QBR scheduled for May 15 -- prep deck by May 10', date:'Apr 1'}],
+      kpis:[
+        {name:'CSAT', value:'91%', target:'85%', trend:'+2%', dir:'up', history:[85,86,87,88,89,91]},
+        {name:'FCR', value:'78%', target:'75%', trend:'+4%', dir:'up', history:[70,72,73,75,76,78]},
+        {name:'Bot Containment', value:'63%', target:'60%', trend:'+5%', dir:'up', history:[52,55,57,59,61,63]},
+        {name:'SLA Uptime', value:'99.9%', target:'99.5%', trend:'0%', dir:'neutral', history:[99.9,99.8,99.9,99.9,99.9,99.9]},
+      ]
+    },
+    { id:3, name:'Acme Corp', segment:'Mid-Market', health:'Needs Attention', arr:'$480K', renewal:'2025-07-15',
+      notes:[],
+      kpis:[
+        {name:'CSAT', value:'81%', target:'85%', trend:'+1%', dir:'up', history:[77,78,79,79,80,81]},
+        {name:'AHT (sec)', value:'295', target:'280', trend:'-5', dir:'up', history:[315,310,308,305,300,295]},
+        {name:'Agent Util.', value:'74%', target:'80%', trend:'+2%', dir:'up', history:[68,69,70,71,72,74]},
+      ]
+    },
+    { id:4, name:'Meridian Health', segment:'Mid-Market', health:'Healthy', arr:'$720K', renewal:'2026-01-10',
+      notes:[],
+      kpis:[
+        {name:'NPS', value:'52', target:'45', trend:'+4', dir:'up', history:[44,46,47,49,50,52]},
+        {name:'FCR', value:'80%', target:'75%', trend:'+2%', dir:'up', history:[74,75,76,77,78,80]},
+        {name:'CSAT', value:'89%', target:'85%', trend:'+1%', dir:'up', history:[84,85,86,87,88,89]},
+      ]
+    },
+  ]
+};
+
+function loadState() {
+  try { const s = localStorage.getItem(STORAGE_KEY); if (s) return JSON.parse(s); } catch(e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_DATA));
+}
+function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {} }
+
+let state = { ...loadState(), filter:'All', search:'', modal:null, modalTarget:null, newKpi:{name:'',value:'',target:'',trend:'',dir:'neutral'}, toastMsg:null };
+let charts = {};
+
+function initials(n) { return n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+function healthClass(h) { return h==='Healthy'?'health-green':h==='At Risk'?'health-red':'health-yellow'; }
+function trendClass(d) { return d==='up'?'trend-up':d==='down'?'trend-down':'trend-neutral'; }
+function trendIcon(d) { return d==='up'?'↑':d==='down'?'↓':'→'; }
+function countHealth(h) { return state.accounts.filter(a=>a.health===h).length; }
+function totalKpis() { return state.accounts.reduce((s,a)=>s+a.kpis.length, 0); }
+function totalArr() {
+  const total = state.accounts.reduce((s,a) => {
+    const v = parseFloat((a.arr||'0').replace(/[^0-9.]/g,''));
+    const m = (a.arr||'').toUpperCase().includes('M') ? 1000000 : (a.arr||'').toUpperCase().includes('K') ? 1000 : 1;
+    return s + (v*m);
+  }, 0);
+  if (total >= 1000000) return '$' + Math.round(total/100000)/10 + 'M';
+  if (total >= 1000) return '$' + Math.round(total/1000) + 'K';
+  return '$' + total;
+}
+function renewalClass(d) { if (!d) return 'renewal-ok'; return (new Date(d)-new Date()) < (120*86400000) ? 'renewal-soon' : 'renewal-ok'; }
+function formatDate(d) { if (!d) return ''; return new Date(d).toLocaleDateString('en-US',{month:'short',year:'numeric'}); }
+function filtered() {
+  return state.accounts.filter(a =>
+    (state.filter==='All' || a.health===state.filter) &&
+    a.name.toLowerCase().includes(state.search.toLowerCase())
+  );
+}
+
+function showToast(msg) {
+  state.toastMsg = msg; render();
+  setTimeout(() => { state.toastMsg = null; const t = document.getElementById('toast-el'); if(t) t.remove(); }, 2500);
+}
+
+function exportCSV() {
+  const rows = [['Account','Segment','Health','ARR','Renewal','KPI','Value','Target','Trend']];
+  state.accounts.forEach(a => {
+    if (a.kpis.length === 0) rows.push([a.name,a.segment,a.health,a.arr||'',a.renewal||'','','','','']);
+    a.kpis.forEach(k => rows.push([a.name,a.segment,a.health,a.arr||'',a.renewal||'',k.name,k.value,k.target,k.trend]));
+  });
+  const csv = rows.map(r => r.map(c => '"'+(c||'').replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='csm_portfolio.csv'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV exported');
+}
+
+function drawSparkline(canvasId, history, dir) {
+  if (charts[canvasId]) { charts[canvasId].destroy(); delete charts[canvasId]; }
+  const el = document.getElementById(canvasId); if (!el) return;
+  const color = dir==='up' ? '#276739' : dir==='down' ? '#FF4F1F' : '#5a7a96';
+  charts[canvasId] = new Chart(el, {
+    type: 'line',
+    data: { labels:['5mo','4mo','3mo','2mo','1mo','Now'], datasets:[{data:history, borderColor:color, borderWidth:1.5, pointRadius:0, tension:0.3, fill:false}] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{enabled:false}}, scales:{x:{display:false},y:{display:false}} }
+  });
+}
+
+function render() {
+  const root = document.getElementById('root');
+  const accounts = filtered();
+  root.innerHTML = `
+    <div class="topbar">
+      <div class="header-brand">
+        <div class="brand-dot"></div>
+        <div>
+          <div class="app-title">Customer portfolio</div>
+          <div class="app-sub">${state.accounts.length} accounts &middot; ${totalKpis()} KPIs &middot; ${totalArr()} ARR</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" onclick="exportCSV()">Export CSV</button>
+        <button class="btn btn-primary" onclick="openAddAccount()">+ Add account</button>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="metric-card"><div class="metric-label">Total accounts</div><div class="metric-value">${state.accounts.length}</div><div class="metric-sub">Active</div></div>
+      <div class="metric-card"><div class="metric-label">Healthy</div><div class="metric-value" style="color:#7fda9f">${countHealth('Healthy')}</div><div class="metric-sub">On track</div></div>
+      <div class="metric-card"><div class="metric-label">Needs attention</div><div class="metric-value" style="color:#ffc94d">${countHealth('Needs Attention')}</div><div class="metric-sub">Review soon</div></div>
+      <div class="metric-card orange"><div class="metric-label">At risk</div><div class="metric-value">${countHealth('At Risk')}</div><div class="metric-sub">Action needed</div></div>
+    </div>
+
+    <div class="accounts-header">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:14px;font-weight:500;color:var(--g-navy);">Accounts</span>
+        <div class="chip-row">
+          ${['All','Healthy','Needs Attention','At Risk'].map(f=>`<button class="chip ${state.filter===f?'active':''}" onclick="setFilter('${f}')">${f}</button>`).join('')}
+        </div>
+      </div>
+      <input class="search-input" placeholder="Search accounts..." value="${state.search}" oninput="setSearch(this.value)"/>
+    </div>
+
+    <div id="acct-list">
+      ${accounts.length===0 ? '<div class="empty-state">No accounts match your filter.</div>' : accounts.map((a,i) => `
+        <div class="account-card${a.health==='At Risk'?' risk-border':''}">
+          <div class="account-top">
+            <div class="account-name-row">
+              <div class="avatar">${initials(a.name)}</div>
+              <div>
+                <div class="account-name">${a.name}</div>
+                <div class="account-meta">
+                  <span>${a.segment}</span>
+                  ${a.arr ? `<span class="arr-badge">${a.arr} ARR</span>` : ''}
+                  ${a.renewal ? `<span class="renewal-badge ${renewalClass(a.renewal)}">Renews ${formatDate(a.renewal)}</span>` : ''}
+                </div>
+              </div>
+            </div>
+            <div class="acct-actions">
+              <span class="health-badge ${healthClass(a.health)}">${a.health}</span>
+              <button class="btn btn-sm" onclick="openEditHealth(${a.id})">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteAccount(${a.id})">Remove</button>
+            </div>
+          </div>
+
+
+
+          <div class="kpi-grid">
+            ${a.kpis.map((k,ki)=>`
+              <div class="kpi-tile">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                  <div class="kpi-name">${k.name}</div>
+                  <span style="display:flex;gap:4px;">
+                    <button class="kpi-del" onclick="openEditKpi(${a.id},${ki})" title="Edit KPI" style="color:var(--g-text-muted);">✎</button>
+                    <button class="kpi-del" onclick="deleteKpi(${a.id},${ki})" title="Remove KPI">x</button>
+                  </span>
+                </div>
+                <div class="kpi-val">${k.value}</div>
+                <div class="kpi-trend ${trendClass(k.dir)}">${trendIcon(k.dir)} ${k.trend} vs last mo</div>
+                <div class="kpi-target">Target: ${k.target}</div>
+              </div>`).join('')}
+            <button class="add-kpi-tile" onclick="openAddKpi(${a.id})">+ KPI</button>
+          </div>
+
+          <div class="notes-section">
+            <div class="notes-label">Notes &amp; next steps</div>
+            ${(a.notes||[]).map((n,ni)=>`
+              <div class="note-item">
+                <span class="note-text">${n.text}</span>
+                <span style="display:flex;align-items:center;gap:6px;">
+                  <span class="note-date">${n.date}</span>
+                  <button class="kpi-del" onclick="deleteNote(${a.id},${ni})" title="Remove note">x</button>
+                </span>
+              </div>`).join('')}
+            <div class="add-note-row">
+              <input class="add-note-input" id="note-input-${a.id}" placeholder="Add a note or next step..." onkeydown="if(event.key==='Enter')addNote(${a.id})"/>
+              <button class="btn btn-sm" onclick="addNote(${a.id})">Add</button>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>
+
+    ${state.modal==='editKpi' ? `<div class="modal-backdrop" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title">Edit KPI — ${state.accounts.find(a=>a.id===state.modalTarget)?.name}</div>
+      <div class="form-group"><label class="form-label">KPI name</label><input class="form-input" placeholder="e.g. CSAT, FCR, AHT..." value="${state.newKpi.name}" oninput="state.newKpi.name=this.value"/></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Current value</label><input class="form-input" placeholder="e.g. 85%" value="${state.newKpi.value}" oninput="state.newKpi.value=this.value"/></div>
+        <div class="form-group"><label class="form-label">Target</label><input class="form-input" placeholder="e.g. 90%" value="${state.newKpi.target}" oninput="state.newKpi.target=this.value"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Trend vs last month</label><input class="form-input" placeholder="e.g. +2%" value="${state.newKpi.trend}" oninput="state.newKpi.trend=this.value"/></div>
+        <div class="form-group"><label class="form-label">Direction</label>
+          <select class="form-input" onchange="state.newKpi.dir=this.value">
+            <option value="up" ${state.newKpi.dir==='up'?'selected':''}>Improving ↑</option>
+            <option value="down" ${state.newKpi.dir==='down'?'selected':''}>Declining ↓</option>
+            <option value="neutral" ${state.newKpi.dir==='neutral'?'selected':''}>Stable →</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEditKpi()">Save KPI</button></div>
+    </div></div>` : ''}
+
+    ${state.modal==='addKpi' ? `<div class="modal-backdrop" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title">Add KPI — ${state.accounts.find(a=>a.id===state.modalTarget)?.name}</div>
+      <div class="form-group"><label class="form-label">KPI name</label><input class="form-input" placeholder="e.g. CSAT, FCR, AHT..." value="${state.newKpi.name}" oninput="state.newKpi.name=this.value"/></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Current value</label><input class="form-input" placeholder="e.g. 85%" value="${state.newKpi.value}" oninput="state.newKpi.value=this.value"/></div>
+        <div class="form-group"><label class="form-label">Target</label><input class="form-input" placeholder="e.g. 90%" value="${state.newKpi.target}" oninput="state.newKpi.target=this.value"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Trend vs last month</label><input class="form-input" placeholder="e.g. +2%" value="${state.newKpi.trend}" oninput="state.newKpi.trend=this.value"/></div>
+        <div class="form-group"><label class="form-label">Direction</label>
+          <select class="form-input" onchange="state.newKpi.dir=this.value">
+            <option value="up" ${state.newKpi.dir==='up'?'selected':''}>Improving ↑</option>
+            <option value="down" ${state.newKpi.dir==='down'?'selected':''}>Declining ↓</option>
+            <option value="neutral" ${state.newKpi.dir==='neutral'?'selected':''}>Stable →</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveKpi()">Add KPI</button></div>
+    </div></div>` : ''}
+
+    ${state.modal==='editHealth' ? `<div class="modal-backdrop" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title">Edit — ${state.accounts.find(a=>a.id===state.modalTarget)?.name}</div>
+      <div class="form-group"><label class="form-label">Health status</label>
+        <div class="chip-row" style="margin-top:6px;">
+          ${['Healthy','Needs Attention','At Risk'].map(h=>`<button class="chip ${state.accounts.find(a=>a.id===state.modalTarget)?.health===h?'active':''}" onclick="setHealth('${h}')">${h}</button>`).join('')}
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">ARR</label><input class="form-input" id="edit-arr" placeholder="e.g. $500K" value="${state.accounts.find(a=>a.id===state.modalTarget)?.arr||''}"/></div>
+      <div class="form-group"><label class="form-label">Renewal date</label><input class="form-input" id="edit-renewal" type="date" value="${state.accounts.find(a=>a.id===state.modalTarget)?.renewal||''}"/></div>
+      <div class="modal-actions"><button class="btn" onclick="saveHealthEdit()">Save</button></div>
+    </div></div>` : ''}
+
+    ${state.modal==='addAccount' ? `<div class="modal-backdrop" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title">Add account</div>
+      <div class="form-group"><label class="form-label">Account name</label><input class="form-input" id="new-name" placeholder="e.g. Acme Corp"/></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Segment</label>
+          <select class="form-input" id="new-seg"><option>Enterprise</option><option>Mid-Market</option><option>SMB</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Health</label>
+          <select class="form-input" id="new-health"><option>Healthy</option><option>Needs Attention</option><option>At Risk</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">ARR</label><input class="form-input" id="new-arr" placeholder="e.g. $500K"/></div>
+        <div class="form-group"><label class="form-label">Renewal date</label><input class="form-input" id="new-renewal" type="date"/></div>
+      </div>
+      <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveAccount()">Add account</button></div>
+    </div></div>` : ''}
+
+    ${state.toastMsg ? `<div id="toast-el" class="toast">${state.toastMsg}</div>` : ''}
+  `;
+
+
+}
+
+window.setFilter = f => { state.filter = f; render(); };
+window.setSearch = v => { state.search = v; render(); };
+window.closeModal = () => { state.modal = null; state.modalTarget = null; render(); };
+window.openAddKpi = id => { state.modal = 'addKpi'; state.modalTarget = id; state.newKpi = {name:'',value:'',target:'',trend:'',dir:'neutral'}; render(); };
+  window.openEditHealth = id => { state.modal = 'editHealth'; state.modalTarget = id; render(); };
+window.openEditKpi = (aid, ki) => {
+  const a = state.accounts.find(a=>a.id===aid);
+  if (!a) return;
+  const k = a.kpis[ki];
+  state.modal = 'editKpi'; state.modalTarget = aid; state.editKpiIdx = ki;
+  state.newKpi = {name:k.name, value:k.value, target:k.target, trend:k.trend, dir:k.dir};
+  render();
+};
+window.saveEditKpi = () => {
+  const a = state.accounts.find(a=>a.id===state.modalTarget);
+  if (a && state.newKpi.name && state.newKpi.value) {
+    const existing = a.kpis[state.editKpiIdx];
+    a.kpis[state.editKpiIdx] = {...existing, ...state.newKpi};
+  }
+  state.modal = null; state.modalTarget = null; saveState(); render(); showToast('KPI updated');
+};
+window.openAddAccount = () => { state.modal = 'addAccount'; render(); };
+window.setHealth = h => { const a = state.accounts.find(a=>a.id===state.modalTarget); if(a) a.health = h; render(); };
+window.saveHealthEdit = () => {
+  const a = state.accounts.find(a=>a.id===state.modalTarget);
+  if (a) {
+    const arr = document.getElementById('edit-arr');
+    const ren = document.getElementById('edit-renewal');
+    if (arr) a.arr = arr.value;
+    if (ren) a.renewal = ren.value;
+  }
+  state.modal = null; state.modalTarget = null; saveState(); render(); showToast('Account updated');
+};
+window.saveKpi = () => {
+  const a = state.accounts.find(a=>a.id===state.modalTarget);
+  if (a && state.newKpi.name && state.newKpi.value) {
+    const numVal = parseFloat(state.newKpi.value);
+    const history = isNaN(numVal) ? [] : Array.from({length:6}, (_,i) => Math.max(0, numVal + (Math.random()-0.5)*numVal*0.08*(5-i))).reverse();
+    a.kpis.push({...state.newKpi, history});
+  }
+  state.modal = null; state.modalTarget = null; saveState(); render(); showToast('KPI added');
+};
+window.deleteKpi = (aid, ki) => { const a = state.accounts.find(a=>a.id===aid); if(a) a.kpis.splice(ki,1); saveState(); render(); };
+window.saveAccount = () => {
+  const name = (document.getElementById('new-name')||{}).value?.trim();
+  const seg = (document.getElementById('new-seg')||{}).value;
+  const health = (document.getElementById('new-health')||{}).value;
+  const arr = (document.getElementById('new-arr')||{}).value;
+  const renewal = (document.getElementById('new-renewal')||{}).value;
+  if (name) state.accounts.push({id:Date.now(), name, segment:seg, health, arr, renewal, notes:[], kpis:[]});
+  state.modal = null; saveState(); render(); showToast('Account added');
+};
+window.deleteAccount = id => {
+  if (!confirm('Remove this account?')) return;
+  state.accounts = state.accounts.filter(a=>a.id!==id); saveState(); render(); showToast('Account removed');
+};
+window.addNote = (aid) => {
+  const input = document.getElementById(`note-input-${aid}`);
+  if (!input || !input.value.trim()) return;
+  const a = state.accounts.find(a=>a.id===aid);
+  if (a) {
+    if (!a.notes) a.notes = [];
+    const date = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    a.notes.unshift({text:input.value.trim(), date});
+    input.value = '';
+  }
+  saveState(); render();
+};
+window.deleteNote = (aid, ni) => { const a = state.accounts.find(a=>a.id===aid); if(a&&a.notes) a.notes.splice(ni,1); saveState(); render(); };
+
+render();
+</script>
+</body>
+</html>
